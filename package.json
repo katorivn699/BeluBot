@@ -1,0 +1,21 @@
+{
+  "name": "emcjs-boilerplate",
+  "version": "0.0.2",
+  "description": "A Discord bot commands, components and events handler based on discord.js v14 and fully written in JavaScript.",
+  "main": "src/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start:stable": "node .",
+    "start:dev": "nodemon ."
+  },
+  "keywords": [],
+  "author": "TFAGaming",
+  "license": "GPL-3.0",
+  "dependencies": {
+    "colors": "^1.4.0",
+    "discord.js": "^14.17.3",
+    "dotenv": "^16.4.7",
+    "mongoose": "^8.9.5",
+    "quick-yaml.db": "^1.2.2"
+  }
+}
