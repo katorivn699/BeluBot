@@ -97,9 +97,9 @@ async function giveXP(message) {
       await message.author.send(
         `Bạn chưa được đăng kí trong server ${message.guild.name}`
       );
+      error(`${message.author.displayName} hasn't registered in the system!`)
     }
-  } catch (error) {
-    warn(`Error to give user ${message.author.displayName}`);
-    warn(error);
+  } catch (e) {
+    error(e);
   }
 }

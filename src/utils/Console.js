@@ -79,4 +79,17 @@ const roleLog = (...message) => {
     fs.writeFileSync('./terminal.log', fileContent, 'utf-8');
 }
 
-module.exports = { info, success, error, warn, userLog, roleLog }
+/**
+ * @param {string[]} message 
+ */
+const jobLog = (...message) => {
+    const time = new Date().toLocaleTimeString();
+    let fileContent = fs.readFileSync('./terminal.log', 'utf-8');
+
+    console.info(`[${time}]`.cyan, '[CronJobLog]'.magenta, message.join(' '));
+    fileContent += [`[${time}]`.cyan, '[CronJobLog]'.magenta, message.join(' ')].join(' ') + '\n';
+
+    fs.writeFileSync('./terminal.log', fileContent, 'utf-8');
+}
+
+module.exports = { info, success, error, warn, userLog, roleLog, jobLog }

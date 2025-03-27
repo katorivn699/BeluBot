@@ -1,7 +1,8 @@
 const ApplicationCommand = require("../../structure/ApplicationCommand");
 const UserCredit = require("../../Models/UserCredit");
 const { success, error } = require("../../utils/Console");
-const { AttachmentBuilder } = require("discord.js");
+const { AttachmentBuilder, ChatInputCommandInteraction } = require("discord.js");
+const DiscordBot = require("../../client/DiscordBot");
 
 module.exports = new ApplicationCommand({
   command: {
@@ -26,6 +27,11 @@ module.exports = new ApplicationCommand({
   options: {
     guildOwner: true,
   },
+  /**
+   * 
+   * @param {DiscordBot} client 
+   * @param {ChatInputCommandInteraction} interaction 
+   */
   run: async (client, interaction) => {
     await interaction.deferReply();
 

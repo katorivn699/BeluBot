@@ -5,6 +5,7 @@ const UserAuthorization = require("../../Models/UserAuthorization");
 const Level = require("../../Models/Level");
 const UserCredit = require("../../Models/UserCredit");
 const { error } = require("../../utils/Console");
+const { comparePassword, hashPassword } = require("../../utils/passwordEncryptor");
 
 module.exports = new Component({
   customId: "signin-modal",
@@ -21,11 +22,11 @@ module.exports = new Component({
     const query = {
       userId: user.id,
       guildId: interaction.guildId,
-      password: field,
     };
     try {
       const existUser = await UserAuthorization.findOne(query);
-      if (existUser) {
+      const correctPassword = await comparePassword(field, existUser.password);
+      if (existUser && correctPassword) {
         const userLevel = new Level({
           userId: user.id,
           guildId: interaction.guildId,
@@ -68,9 +69,14 @@ module.exports = new Component({
           content: "Đăng nhập thành công! Vui lòng kiểm tra kênh chào mừng.",
           ephemeral: true,
         });
+      } else if (existUser && !correctPassword) {
+        await interaction.reply({
+          content: "Sai mã xác minh!",
+          ephemeral: true,
+        });
       } else {
         await interaction.reply({
-          content: "Sai mã xác minh hoặc tài khoản chưa được tạo!",
+          content: "Tài khoản chưa được tạo!",
           ephemeral: true,
         });
       }

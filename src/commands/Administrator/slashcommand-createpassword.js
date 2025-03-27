@@ -5,6 +5,8 @@ const {
 const ApplicationCommand = require("../../structure/ApplicationCommand");
 const UserAuthorization = require("../../Models/UserAuthorization");
 const { error } = require("../../utils/Console");
+const { hashPassword } = require("../../utils/passwordEncryptor");
+const User = require("../../Models/User");
 
 function generateRandomPassword(length = 20) {
   const characters =
@@ -31,6 +33,13 @@ module.exports = new ApplicationCommand({
         type: ApplicationCommandOptionType.Mentionable,
         required: true,
       },
+      {
+        name: "role",
+        description: "Vai trò của người dùng (web)",
+        type: ApplicationCommandOptionType.String,
+        required: true,
+        autocomplete: true,
+      },
     ],
   },
   options: {
@@ -45,7 +54,7 @@ module.exports = new ApplicationCommand({
     await interaction.deferReply();
 
     if (!interaction.inGuild()) {
-      interaction.editReply({
+      return interaction.editReply({
         content: "Vui lòng dùng lệnh trong nhóm!",
         ephemeral: true,
       });
@@ -53,8 +62,13 @@ module.exports = new ApplicationCommand({
 
     try {
       const guser = interaction.options.getMentionable("user");
+      const role = interaction.options.getString("role");
 
       const newPassword = generateRandomPassword();
+      const hashedPassword = await hashPassword(newPassword);
+
+      // Lấy ID avatar
+      const avatarId = guser.user.avatar;
 
       const query = {
         userId: guser.id,
@@ -67,23 +81,37 @@ module.exports = new ApplicationCommand({
         const newUserAuth = new UserAuthorization({
           userId: guser.id,
           guildId: interaction.guildId,
-          password: newPassword,
+          password: hashedPassword,
           isLogin: false,
         });
 
+        const newUser = new User({
+          userId: guser.id,
+          username: guser.user.displayName,
+          createdAt: Date.now(),
+          role: role,
+          avatar: avatarId,
+        });
+
         await newUserAuth.save();
-        await guser.send("Mã xác nhận của bạn là `" + newPassword + "`");
+        await newUser.save();
+        await guser.send(`Mã xác nhận của bạn là \`\`\`${newPassword}\`\`\``);
+
         interaction.editReply({
-          content: `Đã tạo thành công mật khẩu dùng 1 lần cho người dùng ${guser.user.displayName}`,
+          content: `✅ Đã tạo thành công mật khẩu dùng 1 lần cho **${guser.user.displayName}** với vai trò **${role}**`,
           ephemeral: true,
         });
       } else {
         interaction.editReply({
-          content: `Người dùng này đã tồn tại!`,
+          content: `⚠️ Người dùng này đã tồn tại!`,
           ephemeral: true,
         });
       }
     } catch (e) {
+      interaction.editReply({
+        content: `❌ Không gửi được mã xác thực. Vui lòng thử lại!`,
+        ephemeral: true,
+      });
       error(e);
     }
   },

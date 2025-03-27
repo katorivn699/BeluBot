@@ -1,6 +1,7 @@
 const { success, warn, info, userLog, error } = require("../../utils/Console");
 const Event = require("../../structure/Event");
 const { Events, PermissionsBitField } = require("discord.js");
+const Config = require("../../Models/Config");
 
 /**
  * Event create voice channel and delete empty temp channel
@@ -10,13 +11,18 @@ module.exports = new Event({
   once: false,
   run: async (_client_, oldState, newState) => {
     try {
+      const configEntries = await Config.find({ guildId: guild.id });
+      const configMap = new Map(
+        configEntries.map((entry) => [entry.key, entry.value])
+      );
       const channelCreationTimes = new Map();
       const guild = newState.guild;
-      const notificationChannelId = process.env.VOICE_LOG;
-      const masterChannelId = process.env.MASTER_VOICE_CHANNEL;
-      const privateChannelId = process.env.MASTER_PRIVATE_VOICE_CHANNEL;
-      const categoryId = process.env.VOICE_CATEGORY;
-      const privateCategoryId = process.env.VOICE_CATEGORY;
+
+      const notificationChannelId = configMap.get("VoiceLog");
+      const masterChannelId = configMap.get("MasterVoice");
+      const privateChannelId = configMap.get("MasterPrivateVoice");
+      const categoryId = configMap.get("VoiceCategory");
+      const defaultRole = configMap.get("DefaultRole");
 
       // Khi người dùng tham gia master channel
       if (!oldState.channelId && newState.channelId === masterChannelId) {
@@ -27,17 +33,17 @@ module.exports = new Event({
           const existingChannel = guild.channels.cache.find(
             (channel) =>
               channel.parentId === categoryId &&
-              channel.name.startsWith(user.user.username)
+              channel.name.startsWith(user.user.displayName)
           );
 
           if (existingChannel) {
             await newState.setChannel(existingChannel);
             userLog(
-              `Moved ${user.user.username} to existing channel ${existingChannel.name}`
+              `Moved ${user.user.displayName} to existing channel ${existingChannel.name}`
             );
           } else {
             const newChannel = await guild.channels.create({
-              name: `${user.user.username}'s Channel`,
+              name: `${user.user.displayName}'s Channel`,
               type: 2, // Voice channel type
               parent: categoryId,
               permissionOverwrites: [
@@ -46,11 +52,15 @@ module.exports = new Event({
                   allow: [
                     PermissionsBitField.Flags.ManageChannels,
                     PermissionsBitField.Flags.MoveMembers,
+                    PermissionsBitField.Flags.Speak,
                   ],
                 },
                 {
-                  id: guild.roles.everyone.id,
-                  allow: [PermissionsBitField.Flags.Connect],
+                  id: defaultRole.roleId,
+                  deny: [
+                    PermissionsBitField.Flags.Connect,
+                    PermissionsBitField.Flags.Speak,
+                  ],
                 },
               ],
             });
@@ -58,7 +68,7 @@ module.exports = new Event({
             channelCreationTimes.set(newChannel.id, new Date());
             await newState.setChannel(newChannel);
             userLog(
-              `Created and moved ${user.user.username} to new channel ${newChannel.name}`
+              `Created and moved ${user.user.displayName} to new channel ${newChannel.name}`
             );
           }
         } else {
@@ -71,7 +81,7 @@ module.exports = new Event({
         const user = newState.member;
 
         const newChannel = await guild.channels.create({
-          name: `${user.user.username}'s Private Channel`,
+          name: `${user.user.displayName}'s Private Channel`,
           type: 2,
           parent: privateCategoryId,
           userLimit: 2,
@@ -87,6 +97,13 @@ module.exports = new Event({
             {
               id: guild.roles.everyone.id,
               deny: [PermissionsBitField.Flags.ViewChannel],
+            },
+            {
+              id: defaultRole.roleId,
+              deny: [
+                PermissionsBitField.Flags.Connect,
+                PermissionsBitField.Flags.Speak,
+              ],
             },
           ],
         });

@@ -1,7 +1,7 @@
 const { Events, GuildMember } = require("discord.js");
 const Event = require("../../structure/Event");
 const { roleLog, error } = require("../../utils/Console");
-const DefaultRole = require("../../Models/DefaultRole");
+const Config = require("../../Models/Config");
 
 module.exports = new Event({
   event: Events.GuildMemberUpdate,
@@ -26,10 +26,11 @@ module.exports = new Event({
  */
 async function roleCheck(oldMember, newMember) {
   try {
-    const defaultRole = await DefaultRole.findOne({
+    const defaultRole = await Config.findOne({
+      key: "defaultRole",
       guildId: oldMember.guild.id,
     });
-    const defaultRoleIds = defaultRole.roleId;
+    const defaultRoleIds = defaultRole.value;
     const newRoles = newMember.roles.cache.map((role) => role);
     const oldRoles = oldMember.roles.cache.map((role) => role);
 

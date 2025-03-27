@@ -17,6 +17,12 @@ const userAuthorizationSchema = new Schema({
     type: Boolean,
     require: true,
   },
+  accessToken: {
+    type: String,
+  },
+  expireAt: {
+    type: Date
+  }
 });
 
 module.exports = model("UserAuthorization", userAuthorizationSchema);

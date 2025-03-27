@@ -1,8 +1,7 @@
 const { Events, GuildMember } = require("discord.js");
 const Event = require("../../structure/Event");
-const { findOne } = require("../../Models/DefaultRole");
 const { error } = require("../../utils/Console");
-const DefaultRole = require("../../Models/DefaultRole");
+const Config = require("../../Models/Config");
 
 module.exports = new Event({
   event: Events.GuildMemberAdd,
@@ -18,13 +17,14 @@ module.exports = new Event({
       if (!guild) {
         return;
       }
-      const role = await DefaultRole.findOne({
+      const config = await Config.findOne({
+        key: "DefaultRole",
         guildId: guild.id,
       });
-      if (!role) {
+      if (!config) {
         return;
       }
-      await member.roles.add(role.roleId);
+      await member.roles.add(config.value);
     } catch (e) {
       error(e);
     }

@@ -86,6 +86,7 @@ class DiscordBot extends Client {
         } catch (err) {
             error('Failed to connect to the Discord bot, retrying...');
             error(err);
+            console.log(err);
             this.login_attempts++;
             setTimeout(this.connect, 5000);
         }
